@@ -1,0 +1,19 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ExportedServices
+metadata:
+  name: default ## The name of the partition containing the service
+  namespace: consul
+spec:
+  services:
+    - name: mesh-gateway
+      consumers:
+        - partition: default
+    - name: web ## The name of the service you want to export
+      consumers:
+        - partition: default
+    - name: api ## The name of the service you want to export
+      consumers:
+        - partition: default
+    - name: api-gateway ## The name of the service you want to export
+      consumers:
+        - partition: default

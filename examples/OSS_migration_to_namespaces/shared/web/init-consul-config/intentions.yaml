@@ -1,0 +1,17 @@
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceIntentions
+metadata:
+  name: api-gateway-web
+spec:
+  destination:
+    name: web
+    namespace: web
+  sources:
+    - name: api-gateway
+      action: allow
+      partition: consul
+    - name: api-gateway
+      namespace: default
+      partition: default
+      action: allow

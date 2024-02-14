@@ -1,0 +1,13 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceResolver
+metadata:
+  name: web
+  namespace: default
+spec:
+  failover:
+    '*':
+      targets:
+      - partition: default
+        namespace: default
+      - partition: shared
+        namespace: web

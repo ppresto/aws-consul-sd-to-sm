@@ -1,0 +1,11 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceResolver
+metadata:
+  name: api
+  namespace: default
+spec:
+  redirect:
+    service: api
+    partition: shared
+    namespace: api
+
