@@ -33,7 +33,7 @@ do
     fi
 done
 
-Setup EKS aliases per project
+# Setup EKS aliases per project
 echo
 echo "EKS Environments"
 echo

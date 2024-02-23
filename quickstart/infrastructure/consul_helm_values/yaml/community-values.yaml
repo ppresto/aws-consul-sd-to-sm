@@ -58,8 +58,6 @@ syncCatalog:
   k8sAllowNamespaces: ["*"]
   k8sDenyNamespaces: ["consul", "kube-system"]
   addK8SNamespaceSuffix: false
-  # consulNamespaces:
-  #   mirroringK8S: false
 
 connectInject:
   enabled: true
@@ -75,9 +73,6 @@ connectInject:
             - service.beta.kubernetes.io/aws-load-balancer-type
   transparentProxy:
     defaultEnabled: false
-  # consulNamespaces:
-  #   mirroringK8S: false
-  #   consulDestinationNamespace: "default"
   cni:
     enabled: true
   metrics:
