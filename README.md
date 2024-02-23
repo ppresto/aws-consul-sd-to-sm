@@ -130,7 +130,7 @@ kubectl -n kube-system delete po -l k8s-app=kube-dns
 
 To quickly backup and patch coredns to forward requests to Consul run the EKS 1.28 patch script below.
 ```
-../../scripts/patch_coredns_to_fwd_to_consul.sh.  #Restarts coredns pods!
+../../scripts/patch_coredns_to_fwd_to_consul.sh  #Restarts coredns pods!
 ```
 An EKS 1.27 template is also available by updating the script's $CORE_DNS_TMPL_DIR.
 
@@ -149,9 +149,9 @@ When Consul is utilized for service discovery, it's common to see services deplo
 
 Deploy `api` to EKS and Consul will automatically register it for **service discovery** like existing services on K8s using catalog-sync or VMs using Consul agents.
 ```
-cd ../../examples/fake-service-community
+cd ../../examples
 kubectl create ns api
-kubectl apply -f api/api-v1.yaml
+kubectl apply -f fake-service-community/api/api-v1.yaml
 ```
 
 Verify DNS forwarding is setup properly and service discovery is working.
@@ -177,17 +177,17 @@ Start with the `Consul API Gateway` first because it will take time for the exte
 | Filename                                   | Description                                                                    |
 | ------------------------------------------ | ------------------------------------------------------------------------------ |
 | consul-apigw.yaml                          | Create Gateway, ClusterRoles, and ClusterRoleBindings|
-| apigw-ReferenceGrant.yaml                  | Example, The default ns needs a ReferenceGrant to access the AIP GW|
+| apigw-ReferenceGrant.yaml                  | Example, Each K8s namespace needs a ReferenceGrant to allow the API GW access|
 | apigw-RouteTimeoutFilter.yaml.enable       | Example, Timeouts are defined per route|
 
 ```
-kubectl apply -f examples/consul-apigw/
+kubectl apply -f consul-apigw/
 ```
 
 #### Deploy web
 Using fake-service deploy `web` into the service mesh.
 
-The following files will be applied into the namespace: web.
+The following files in `./fake-service-community` will be applied into the namespace: web.
 | Filename                                   | Description                                                                    |
 | ------------------------------------------ | ------------------------------------------------------------------------------ |
 | web/init-consul-config/ReferenceGrant.yaml     | Allow the API Gateway access to the k8s namespace running `web`|
@@ -200,8 +200,8 @@ The following files will be applied into the namespace: web.
 
 ```
 kubectl create ns web
-kubectl apply -f web/init-consul-config
-kubectl apply -f web/web-v1.yaml
+kubectl apply -f fake-service-community/web/init-consul-config
+kubectl apply -f fake-service-community/web/web-v1.yaml
 ```
 While deploying `web`, [mesh defaults](https://github.com/ppresto/aws-consul-sd-to-sm/blob/main/examples/fake-service-community/web/init-consul-config/mesh.yaml) were applied which included **meshDestinationsOnly: false**.  This allows mesh services to access external destinations.  This enables mesh services to use existing service discovery lookups like `api.service.consul` that are outside of the service mesh.
 
@@ -212,7 +212,7 @@ export APIGW_URL=$(kubectl get services --namespace=consul api-gateway -o jsonpa
 nslookup ${APIGW_URL}
 ```
 
-Access `web` using the HTTP routes defined in [apigw-route-web.yaml](https://github.com/ppresto/aws-consul-sd-to-sm/blob/main/examples/fake-service-community/web/init-consul-config/apigw-route-web.yaml)
+Using the browser, access `web` using the HTTP routes defined in [apigw-route-web.yaml](https://github.com/ppresto/aws-consul-sd-to-sm/blob/main/examples/fake-service-community/web/init-consul-config/apigw-route-web.yaml)
 ```
 echo "http://${APIGW_URL}/ui"
 ```
@@ -244,6 +244,7 @@ kubectl delete -f consul-apigw/
 
 # Remove Consul
 consul-k8s uninstall -auto-approve -wipe-data
+kubectl apply -f ./logs/kube-system-coredns-configmap-orig.yaml
 
 # Remove the AWS LB Controller
 helm uninstall -n kube-system --kube-context=usw2 aws-load-balancer-controller
