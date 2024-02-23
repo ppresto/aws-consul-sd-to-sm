@@ -187,16 +187,17 @@ kubectl apply -f consul-apigw/
 #### Deploy web
 Using fake-service deploy `web` into the service mesh.
 
-The following files in `./fake-service-community` will be applied into the namespace: web.
-| Filename                                   | Description                                                                    |
-| ------------------------------------------ | ------------------------------------------------------------------------------ |
-| web/init-consul-config/ReferenceGrant.yaml     | Allow the API Gateway access to the k8s namespace running `web`|
-| web/init-consul-config/apigw-route-web.yaml    | Define HTTPRoute's from the API Gateway to `web`|
-| web/init-consul-config/servicedefaults.yaml    | Set service level configurations like the protocol (http)|
-| web/init-consul-config/intentions-web.yaml      | AuthZ rule or **intention** allowing the api gateway to talk to `web`.|
-| web/init-consul-config/proxydefaults.yaml      | Configure the defaults for all proxies|
-| web/init-consul-config/mesh.yaml               | Configure mesh defaults like allowing mesh services external access or to run in permissive mode|
-| web/web-v1.yaml                                | Create K8s ServiceAccount, Service, and `web` Deployment.  Using annotation **connect-inject** to enable service mesh|
+The following files in `./fake-service-community/web/init-consul-config` will be applied into the namespace: web.
+| Filename                   | Description                                                                    |
+| ---------------------------| ------------------------------------------------------------------------------ |
+| ReferenceGrant.yaml        | Allow the API Gateway access to the k8s namespace running `web`|
+| apigw-route-web.yaml       | Define HTTPRoute's from the API Gateway to `web`|
+| apigw-meshservice-web.yaml | Instead of using K8s svc use Consul svc. Useful for multi-cluster failover (not required).|
+| servicedefaults.yaml       | Set service level configurations like the protocol (http)|
+| intentions-web.yaml        | AuthZ rule or **intention** allowing the api gateway to talk to `web`.|
+| proxydefaults.yaml         | Configure the defaults for all proxies|
+| mesh.yaml                  | Configure mesh defaults like allowing mesh services external access or to run in permissive mode|
+| web/web-v1.yaml            | Create K8s ServiceAccount, Service, and `web` Deployment.  Using annotation **connect-inject** to enable service mesh|
 
 ```
 kubectl create ns web
