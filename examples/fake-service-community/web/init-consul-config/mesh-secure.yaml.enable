@@ -4,6 +4,7 @@ metadata:
   name: mesh
   namespace: consul
 spec:
+  #allowEnablingPermissiveMutualTLS: true
   transparentProxy:
     meshDestinationsOnly: true
   peering:

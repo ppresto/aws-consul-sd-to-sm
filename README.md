@@ -189,7 +189,7 @@ Using fake-service deploy `web` into the service mesh.
 
 The following files in `./fake-service-community/web/init-consul-config` will be applied into the namespace: web.
 | Filename                   | Description                                                                    |
-| ---------------------------| ------------------------------------------------------------------------------ |
+| --------------------------- | ------------------------------------------------------------------------------ |
 | ReferenceGrant.yaml        | Allow the API Gateway access to the k8s namespace running `web`|
 | apigw-route-web.yaml       | Define HTTPRoute's from the API Gateway to `web`|
 | apigw-meshservice-web.yaml | Instead of using K8s svc use Consul svc. Useful for multi-cluster failover (not required).|
@@ -228,8 +228,8 @@ Notice, `web` is inside the service mesh and accessing `api.service.consul` whic
 | api/permissive_mTLS_mode/api-v2-mesh-enabled.yaml     | Enable service mesh with annotation: connect-inject: true |
 
 ```
-kubectl apply -f api/permissive_mTLS_mode/init-consul-config
-kubectl apply -f api/permissive_mTLS_mode/api-v2-mesh-enabled.yaml
+kubectl apply -f fake-service-community/api/permissive_mTLS_mode/init-consul-config
+kubectl apply -f fake-service-community/api/permissive_mTLS_mode/api-v2-mesh-enabled.yaml
 ```
 Refresh the browser a few times and watch how requests from web are balanced across both non-mesh and mesh enabled api deployments. After verifying the api mesh enabled deployment is still working for all downstreams using api.service.consul go ahead and remove api-v1.
 ```
