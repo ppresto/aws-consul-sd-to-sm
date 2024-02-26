@@ -45,7 +45,7 @@ alias 'kk=kubectl -n kube-system'
 ```
 
 ### Install the AWS LB controller
-The AWS LB controller is required to map internal NLB or ALBs to kubernetes services.  The helm templates used to install consul will attempt to leverage this controller.  This repo is adding the required tags to public and private subnets in order for the LB to properly discover them.  If not using this repo ensure the proper subnet tags are in nplace.  
+The AWS LB controller is required to map internal NLB or ALBs to kubernetes services.  The helm templates used to install consul will attempt to leverage this controller.  This repo is adding the required tags to public and private subnets in order for the LB to properly discover them.  If not using this repo ensure the proper subnet tags are in place or the Consul Helm installation will fail.
 
 To install the AWS LB Controller create a service account tied to the AWS account_id used to create EKS.
 ```
@@ -105,10 +105,10 @@ export CONSUL_HTTP_TOKEN=$(kubectl -n consul get secrets consul-bootstrap-acl-to
 export CONSUL_HTTP_SSL_VERIFY=false
 consul members
 ```
-If Consul isn't installed locally, simply login to the Consul UI using the CONSUL_HTTP_ADDR and CONSUL_HTTP_TOKEN to verify its alive.
+If Consul isn't installed locally, simply use the browser to login to the Consul UI with the CONSUL_HTTP_ADDR and CONSUL_HTTP_TOKEN to verify its alive.
 
 ### Setup DNS Forwarding in EKS
-DNS forwarding is only required for service discovery. There are many ways to forward DNS requests to Consul. Within EKS the simplest way is to have coredns forward the default stub domain (.consul) to Consul. 
+[DNS forwarding](https://developer.hashicorp.com/consul/tutorials/networking/dns-forwarding) is only required for service discovery. There are many ways to forward DNS requests to Consul. Within EKS the simplest way is to have coredns forward the default stub domain (.consul) to Consul. 
 To do this manually, get the Consul DNS service IP.
 ```
 CONSUL_DNS_CLUSTER_IP=$(kubectl -n consul get svc ${CONSUL_DNS_SVC} -o json | jq -r '.spec.clusterIP')
