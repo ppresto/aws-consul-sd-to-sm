@@ -220,7 +220,8 @@ echo "http://${APIGW_URL}/ui"
 
 Notice, `web` is inside the service mesh and accessing `api.service.consul` which is outside the mesh.  Traffic between `web` and `api` is unencrypted.
 
-## Migrate Service into the service mesh
+## Migrate Service into the service mesh (Three Step Approach)
+### Step 1: Enable permissive mode
 `web` and other downstream services may be accessing `api` so the current service discovery lookup `api.service.consul` needs to be accessible to both mesh and non-mesh services during the migration.  To do this, create a new deployment for `api` enabling Consul service mesh and permissive mode.
 | Filename                                          | Description                                                                    |
 | ------------------------------------------------- | ------------------------------------------------------------------------------ |
@@ -234,6 +235,48 @@ kubectl apply -f fake-service-community/api/permissive_mTLS_mode/api-v2-mesh-ena
 Refresh the browser a few times and watch how requests from web are balanced across both non-mesh and mesh enabled api deployments. After verifying the api mesh enabled deployment is still working for all downstreams using api.service.consul go ahead and remove api-v1.
 ```
 kubectl -n api delete deployment api-v1
+```
+
+Newly onboarded services can run in permissive mode (HTTP) while other downstream and upstream services are migrated to the service mesh (mTLS) in any order. This ensures a smooth transition for all services. 
+
+### Step 2: Enforce mTLS
+After migrating all dependent downstream services into the mesh, disable permissive mode and enforce secure mTLS connections for every request to api.service.consul. A service intention is needed to ensure web is authorized to make requests to api.
+```
+kubectl apply -f ./api/permissive_mTLS_mode/init-consul-config/intention-api.yaml
+kubectl apply -f ./api/permissive_mTLS_mode/servicedefaults-strict-dialedDirect.yaml.enable
+```
+
+Now all requests to api.service.consul are being encrypted with mTLS.  Verify the traffic is encrypted using tcpdump with a debug container.
+```
+kubectl debug -it -n api $(kubectl -n api get pods --output jsonpath='{.items[0].metadata.name}') --target consul-dataplane --image nicolaka/netshoot -- tcpdump -i eth0 src port 9091 -A
+
+
+Targeting container "consul-dataplane". If you don't see processes from this container it may be because the container runtime doesn't support this feature.
+Defaulting debug container name to debugger-g669d.
+If you don't see a command prompt, try pressing enter.
+20:18:34.047169 IP api-v2-b45bf7655-9kshs.9091 > 10-15-3-175.web.web.svc.cluster.local.43512: Flags [P.], seq 148:626, ack 3559, win 462, options [nop,nop,TS val 3923183901 ecr 2279397636], length 478
+E....;@....'
+...
+...#.....k.f4m............
+.. ...................6.@nW.S._r"h....m.@;U....WyY........h........m......q.B.......N.Y}.F.A.{y..^..........]..@0.zv">Y#.....6.n.z..Oh.6.p..G.....9...@0.zv.y.......#U.......h.o..w6.....`.\......*...N..u.".U...`\.;....M..=.....$..,....e...T`.I/.a.z.$;...c........z..Y..q...W.."...........%.*...
+.3..Y/.....a..R(..6..0...Ka`.GIt._.Dn...N......L k..j...ch.7)'......m/........3....t."....r..4|t7..Q..vfs.....I..*..|..4m%......c..!w7u..s.......t.,.....EF7....Bd...P..........E....h..3;n..........+.
+```
+Congratulations! You successfully migrated an existing service into the Consul service mesh and enforced mTLS without requiring any application changes or affecting any other downstream services. 
+
+### Step 3: Use virtual services
+For development teams to take full advantage of the L7 traffic capabilities like retries, rate limits, timeouts, circuit breakers, and traffic splitters, they will want to start using virtual services. Deploy web-v2, which has been updated to use api.virtual.consul. 
+```
+kubectl apply -f api/permissive_mTLS_mode/web-v2-virtualaddress.yaml.enable
+```
+Refresh the browser until you see requests from web-v2 route to the new virtual address. You may need to clear the cache. Once validated, delete web-v1 to ensure all requests use the new virtual address.
+```
+kubectl -n web delete deploy/web-v1
+```
+
+web is now making requests to api.virtual.consul. Once all downstream services are using the virtual address, disable dialedDirectly for api to ensure L7 traffic patterns are being applied to all future requests. Then disable the EnablingPermissiveMutualTLS mode mesh-wide so no services can enable permissive mode in the future and bypass mTLS.  
+```
+kubectl apply -f api/permissive_mTLS_mode/init-consul-config/servicedefaults-std.yaml.enable
+kubectl apply -f web/init-consul-config/mesh-secure.yaml.enable
 ```
 
 ## Clean Up
